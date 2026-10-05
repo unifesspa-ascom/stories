@@ -150,9 +150,9 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-
 
   var OUT_W = 2161, OUT_H = 3840; // tamanho final do PNG
   var TEMPLATES = {
-    roxo:    {label:'Roxo',    file:'modelo-roxo.jpg',    color:'#A90884'},
-    laranja: {label:'Laranja', file:'modelo-laranja.jpg', color:'#CD5230'},
-    azul:    {label:'Azul',    file:'modelo-azul.jpg',    color:'#0907A6'}
+    roxo:    {label:'Roxo',    file:'modelo-roxo',    color:'#A90884'},
+    laranja: {label:'Laranja', file:'modelo-laranja', color:'#CD5230'},
+    azul:    {label:'Azul',    file:'modelo-azul',    color:'#0907A6'}
   };
   var TPL_KEYS = ['roxo','laranja','azul'];
   var BODY_COLOR = '#1C1B31';
@@ -192,12 +192,18 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-
 
   // ---------- carregar modelos e fonte ----------
   function loadTemplates(){
+    // aceita modelo-<cor>.png ou modelo-<cor>.jpg (tenta png primeiro)
+    var EXTS = ['.png', '.jpg', '.jpeg'];
     return Promise.all(TPL_KEYS.map(function(k){
       return new Promise(function(res){
-        var im = new Image();
-        im.onload = function(){ tplImgs[k] = im; res(); };
-        im.onerror = function(){ res(); };
-        im.src = TEMPLATES[k].file;
+        var n = 0;
+        (function tryNext(){
+          if(n >= EXTS.length){ res(); return; }
+          var im = new Image();
+          im.onload = function(){ tplImgs[k] = im; res(); };
+          im.onerror = function(){ n++; tryNext(); };
+          im.src = TEMPLATES[k].file + EXTS[n];
+        })();
       });
     }));
   }
@@ -597,7 +603,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-
   syncOrderSelects();
   renderList();
   Promise.all([loadTemplates(), loadFonts()]).then(function(){
-    if(!tplImgs.roxo && !tplImgs.laranja && !tplImgs.azul) setStatus('Não encontrei as imagens dos modelos (modelo-roxo.jpg, modelo-laranja.jpg e modelo-azul.jpg). Elas precisam estar na mesma pasta desta página.', 'err');
+    if(!tplImgs.roxo && !tplImgs.laranja && !tplImgs.azul) setStatus('Não encontrei as imagens dos modelos (modelo-roxo.png, modelo-laranja.png e modelo-azul.png). Elas precisam estar na mesma pasta desta página.', 'err');
     previewAll();
   });
   window.__stories = {renderCard:renderCard, cards:function(){return cards;}, layoutText:layoutText, G:G, newCard:newCard, setPhoto:setPhoto, addCard:function(c){cards.push(c);}, renderList:renderList, ready:function(){return Promise.all([loadTemplates(),loadFonts()]);}};
